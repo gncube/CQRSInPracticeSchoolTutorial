@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SchoolDbContext))]
-    [Migration("20231008193439_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20231009105038_InitialSetupOnModelCreating")]
+    partial class InitialSetupOnModelCreating
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,8 +23,7 @@ namespace Infrastructure.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("CourseID");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -32,15 +31,14 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Course", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("Domain.Enrollment", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("EnrollmentID");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("CourseId")
                         .HasColumnType("INTEGER");
@@ -55,30 +53,14 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Enrollment", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.EnrollmentData", b =>
-                {
-                    b.Property<string>("Course")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Grade")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("StudentId")
-                        .HasColumnType("INTEGER");
-
-                    b.ToTable("EnrollmentData");
+                    b.ToTable("Enrollment");
                 });
 
             modelBuilder.Entity("Domain.Sports", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("SportsID");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -86,15 +68,14 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Sports", (string)null);
+                    b.ToTable("Sports");
                 });
 
             modelBuilder.Entity("Domain.SportsEnrollment", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("SportsEnrollmentID");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Grade")
                         .HasColumnType("INTEGER");
@@ -109,15 +90,14 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("SportsEnrollment", (string)null);
+                    b.ToTable("SportsEnrollments");
                 });
 
             modelBuilder.Entity("Domain.Student", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("StudentID");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -129,7 +109,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Student", (string)null);
+                    b.ToTable("Students");
                 });
 
             modelBuilder.Entity("Domain.Enrollment", b =>
