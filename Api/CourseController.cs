@@ -37,6 +37,11 @@ public class CourseController
 
         var course = await req.ReadFromJsonAsync<Course>();
 
+        if (course == null)
+        {
+            return req.CreateResponse(HttpStatusCode.BadRequest);
+        }
+
         await _courseRepository.AddAsync(course);
 
         var response = req.CreateResponse(HttpStatusCode.OK);

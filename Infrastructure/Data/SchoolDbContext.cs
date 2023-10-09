@@ -23,12 +23,28 @@ public class SchoolDbContext : DbContext
             //x.Navigation(p => p.Enrollments).AutoInclude();
             x.HasMany(p => p.SportsEnrollments).WithOne(p => p.Student);
             //x.Navigation(p => p.SportsEnrollments).AutoInclude();
+
+            // Seeding student data with realistic information
+            x.HasData(
+                new Student { Id = 1, Email = "john.doe@email.com", Name = "John Doe" },
+                new Student { Id = 2, Email = "jane.smith@email.com", Name = "Jane Smith" },
+                new Student { Id = 3, Email = "emily.jones@email.com", Name = "Emily Jones" }
+            );
         });
         modelBuilder.Entity<Course>(x =>
         {
             x.ToTable("Course").HasKey(k => k.Id);
             x.Property(p => p.Id).HasColumnName("CourseID");
             x.Property(p => p.Name);
+
+            // Seeding course data with realistic information
+            x.HasData(
+                new Course { Id = 1, Name = "Introduction to Computer Science" },
+                new Course { Id = 2, Name = "Data Structures and Algorithms" },
+                new Course { Id = 3, Name = "Operating Systems" },
+                new Course { Id = 4, Name = "Web Development" },
+                new Course { Id = 5, Name = "Machine Learning" }
+            );
         });
         modelBuilder.Entity<Enrollment>(x =>
         {
