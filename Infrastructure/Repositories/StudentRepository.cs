@@ -37,4 +37,9 @@ public class StudentRepository : IRepository<Student>
     {
         throw new NotImplementedException();
     }
+
+    public Task<Course> GetByNameAsync(string courseName)
+    {
+        throw new NotImplementedException();
+    }
 }
