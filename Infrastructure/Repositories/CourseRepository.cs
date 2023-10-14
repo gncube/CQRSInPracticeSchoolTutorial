@@ -26,6 +26,16 @@ public class CourseRepository : IRepository<Course>
         return Task.FromResult(course);
     }
 
+    public Task<Course> GetByNameAsync(string courseName)
+    {
+        var course = _context.Courses.Find(courseName);
+        if (course == null)
+        {
+            throw new Exception($"Course with name {courseName} not found");
+        }
+        return Task.FromResult(course);
+    }
+
     public Task<Course> AddAsync(Course entity)
     {
         _context.Courses.Add(entity);

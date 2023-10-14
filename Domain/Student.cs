@@ -1,28 +1,46 @@
 ﻿using Domain.Enums;
 
 namespace Domain;
-public class Student
+public class Student : Entity
 {
-    public long Id { get; set; }
     public string Name { get; set; }
     public string Email { get; set; }
-    public ICollection<Enrollment> Enrollments { get; set; }
-    public ICollection<SportsEnrollment> SportsEnrollments { get; set; }
 
-    public string EnrollIn(Course course, Grade grade)
+    public readonly IList<Enrollment> _enrollments = new List<Enrollment>();
+    public IReadOnlyList<Enrollment> Enrollments => _enrollments.ToList();
+
+
+    public readonly IList<Disenrollment> _disenrollments = new List<Disenrollment>();
+    public IReadOnlyList<Disenrollment> Disenrollments => _disenrollments.ToList();
+
+    public Student(string name, string email)
     {
-        if (Enrollments.Any(x => x.CourseId == course.Id))
-            return $"Already enrolled in course '{course.Name}'";
+        Name = name;
+        Email = email;
+    }
 
-        var enrollment = new Enrollment
-        {
-            CourseId = course.Id,
-            Grade = grade,
-            Student = this
-        };
-        Enrollments.Add(enrollment);
+    public Enrollment GetEnrollment(int index)
+    {
+        if (_enrollments.Count > index)
+            return _enrollments[index];
+        return null;
+    }
 
-        return "OK";
+    public void RemoveEnrollment(Enrollment enrollment, string comment)
+    {
+        _enrollments?.Remove(enrollment);
+
+        var disenrollment = new Disenrollment(enrollment.Student, enrollment.Course, comment);
+        _disenrollments.Add(disenrollment);
+    }
+
+    public void Enroll(Course course, Grade grade)
+    {
+        if (_enrollments.Count >= 2)
+            throw new Exception("Cannot have move than 2 enrollments");
+
+        var enrollment = new Enrollment(this, course, grade);
+        _enrollments.Add(enrollment);
     }
 }
 

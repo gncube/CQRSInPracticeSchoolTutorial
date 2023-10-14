@@ -2,10 +2,22 @@
 
 namespace Domain;
 
-public class Enrollment
+public class Enrollment : Entity
 {
-    public long Id { get; set; }
-    public Grade Grade { get; set; }
-    public long CourseId { get; set; }
-    public Student Student { get; set; }
+    public Student Student { get; protected set; }
+    public Course Course { get; protected set; }
+    public Grade Grade { get; protected set; }
+
+    public Enrollment(Student student, Course course, Grade grade)
+    {
+        Student = student;
+        Course = course;
+        Grade = grade;
+    }
+
+    public void Update(Course course, Grade grade)
+    {
+        Course = course;
+        Grade = grade;
+    }
 }

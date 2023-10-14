@@ -1,3 +1,4 @@
+using Application.Dtos;
 using Application.Interfaces;
 using Domain;
 using Domain.Enums;
@@ -24,50 +25,115 @@ public class StudentController
         _context = context;
     }
 
-    [Function("StudentController")]
-    public IActionResult StudentsGet([HttpTrigger(AuthorizationLevel.Function, "get", Route = "students")] HttpRequestData req)
+    [Function("StudentController")] // Query
+    public IActionResult GetList([HttpTrigger(AuthorizationLevel.Function, "get", Route = "students")] HttpRequestData req, string enrolled, int? number)
     {
-        _logger.LogInformation("{FunctionName} function processed a request.", nameof(StudentsGet));
+        _logger.LogInformation("{FunctionName} function processed a request.", nameof(GetList));
 
-        var students = _studentRepository.GetAll();
+        IReadOnlyList<Student> students = _studentRepository.GetAll();
+        List<StudentDto> studentDtos = students.Select(x => ConvertToDto(x)).ToList();
 
         return new OkObjectResult(students);
     }
 
-    [Function(nameof(StudentsAddAsync))]
-    public async Task<IActionResult> StudentsAddAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "students")] HttpRequestData req)
+    private StudentDto ConvertToDto(Student student)
     {
-        _logger.LogInformation("{FunctionName} function processed a request.", nameof(StudentsAddAsync));
-        // Get the student data from the request body.
-        var student = await req.ReadFromJsonAsync<Student>();
+        return new StudentDto
+        {
+            //Id = student.Id,
+            Name = student.Name,
+            Email = student.Email,
+            Enrollments = student.Enrollments.Select(x => new EnrollmentDto
+            {
+                // Id = x.Id,
+                Course = x.Course.Name,
+                Grade = x.Grade.ToString(),
+                //Number = x.Number
+            }).ToList()
+        };
+    }
 
-        // Add the student to the repository.
+
+    [Function(nameof(Register))] // Command
+    public async Task<IActionResult> Register(
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "students")] HttpRequestData req)
+    {
+
+        var dto = await req.ReadFromJsonAsync<StudentCreateDto>();
+        if (dto == null)
+            return new BadRequestObjectResult("Invalid dto data");
+        var student = new Student(dto.Name, dto.Email);
+
+        if (dto.Course1 != null && dto.Course1Grade != null)
+        {
+            Course course = await _courseRepository.GetByNameAsync(dto.Course1);
+            if (course == null)
+                return new NotFoundObjectResult($"Course with name {dto.Course1} not found");
+            student.Enroll(course, Enum.Parse<Grade>(dto.Course1Grade));
+        }
+
         _studentRepository.AddAsync(student);
-
-        // Return a success response.
+        _context.SaveChanges();
         return new OkObjectResult(student);
     }
 
-    [Function(nameof(Enroll))]
+    [Function(nameof(Enroll))] // Command
     public async Task<IActionResult> Enroll(
-        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "students/studentId/{studentId}/courseId/{courseId}")] HttpRequestData req,
-        long studentId, long courseId, Grade grade)
+    [HttpTrigger(AuthorizationLevel.Function, "post", Route = "students/studentId/{studentId}/courseId/{courseId}")] HttpRequestData req,
+    long studentId)
     {
         _logger.LogInformation("{FunctionName} function processed a request.", nameof(Enroll));
         Student student = await _studentRepository.GetByIdAsync(studentId);
         if (student == null)
             return new NotFoundObjectResult($"Student with id {studentId} not found");
 
-        Course course = await _courseRepository.GetByIdAsync(courseId);
-        if (course == null)
-            return new NotFoundObjectResult($"Course with id {courseId} not found");
+        var studentEnrollmentDto = await req.ReadFromJsonAsync<StudentEnrollmentDto>();
+        if (studentEnrollmentDto == null)
+            return new BadRequestObjectResult("Invalid dto enrollment data");
 
-        string message = student.EnrollIn(course, grade);
+        Course course = await _courseRepository.GetByNameAsync(studentEnrollmentDto.Course);
+        if (course == null)
+            return new NotFoundObjectResult($"Course with id {studentEnrollmentDto.Course} not found");
+
+        bool success = Enum.TryParse(studentEnrollmentDto.Grade, out Grade grade);
+        if (!success)
+            return new BadRequestObjectResult($"Invalid grade {studentEnrollmentDto.Grade}");
+
+        student.Enroll(course, grade);
 
         _context.SaveChanges();
 
         // Return a success response.
-        return new OkObjectResult(message);
+        return new OkObjectResult(student);
+    }
+
+    [Function(nameof(Transfer))] // Command
+    public async Task<IActionResult> Transfer(
+    [HttpTrigger(AuthorizationLevel.Function, "post", Route = "students/studentId/{studentId}/enrollmentnumber/{enrollmentNumber}")] HttpRequestData req,
+    long studentId, int enrollmentNumber)
+    {
+        _logger.LogInformation("{FunctionName} function processed a request.", nameof(Transfer));
+        Student student = await _studentRepository.GetByIdAsync(studentId);
+        if (student == null)
+            return new NotFoundObjectResult($"Student with id {studentId} not found");
+
+        var studentTransferDto = await req.ReadFromJsonAsync<StudentTransferDto>();
+        if (studentTransferDto == null)
+            return new BadRequestObjectResult("Invalid dto transfer data");
+
+        Course course = await _courseRepository.GetByNameAsync(studentTransferDto.Course);
+        if (course == null)
+            return new NotFoundObjectResult($"Course with id {studentTransferDto.Course} not found");
+
+        bool success = Enum.TryParse(studentTransferDto.Grade, out Grade grade);
+        if (!success)
+            return new BadRequestObjectResult($"Invalid grade {studentTransferDto.Grade}");
+
+        Enrollment enrollment = student.GetEnrollment(enrollmentNumber);
+
+        _context.SaveChanges();
+
+        // Return a success response.
+        return new OkObjectResult(enrollment);
     }
 }
